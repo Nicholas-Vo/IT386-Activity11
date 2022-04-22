@@ -4,8 +4,8 @@ import java.util.Arrays;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ParallelSum {
-    static int nThreads, N;
     static int[] arrayA;
+    static int nThreads, N;
     static int totalSum = 0;
 
     public static void main(String[] args) throws InterruptedException {
@@ -27,7 +27,9 @@ public class ParallelSum {
 //        } finally {
 //            mutex.unlock();
 //        }
-        sum();
+        for (int i = 0; i < 30; i++) {
+            sum();
+        }
     }
 
     private static void sum() throws InterruptedException {
@@ -51,9 +53,9 @@ public class ParallelSum {
             int low = work * i; // Begin
             int high = low + work; // Begin + work
 
-            if (remainder > 0 && i == nThreads) {
-                high = i + 1 % work + remainder;
-            }
+//            if (remainder > 0 && i == nThreads) {
+//                high = i + 1 % work + remainder;
+//            }
 
             Runnable obj = new Worker(low, high);
             workers[i] = new Thread(obj);
@@ -66,7 +68,7 @@ public class ParallelSum {
 
         //long elapsedTime = System.currentTimeMillis() - startTime;
         System.out.println(Thread.currentThread().getName() + ": Sequential Sum " + seqSum()
-                + ", Parallel Sum " + totalSum + " Num threads: " + nThreads);
+                + ", Parallel Sum " + totalSum + " Num threads: " + nThreads + " Array size: " + arrayA.length);
     }
 
     /**
@@ -75,6 +77,7 @@ public class ParallelSum {
     public static class Worker implements Runnable {
         private final int low;
         private final int high;
+        private int localSum;
 
         public Worker(int low, int high) {
             this.low = low;
@@ -92,6 +95,7 @@ public class ParallelSum {
                 for (int i = low; i < high; i++) {
                     totalSum += arrayA[i];
                 }
+                totalSum += localSum;
             } finally {
                 mutex.unlock();
             }
