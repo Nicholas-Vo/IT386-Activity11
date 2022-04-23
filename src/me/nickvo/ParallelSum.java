@@ -4,9 +4,9 @@ import java.util.Arrays;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ParallelSum {
-    static int[] arrayA;
+    static long[] arrayA;
     static int nThreads, N;
-    static int totalSum = 0;
+    static long totalSum = 0;
 
     public static void main(String[] args) throws InterruptedException {
         /*Get user input from command line*/
@@ -18,23 +18,15 @@ public class ParallelSum {
             System.exit(1);
         }
 
-//        ReentrantLock mutex = new ReentrantLock();
-//        try {
-//            mutex.lock();
-//            for (int i = 0; i < 30; i++) {
-//                sum();
-//            }
-//        } finally {
-//            mutex.unlock();
-//        }
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < nThreads; i++) {
             sum();
         }
     }
 
     private static void sum() throws InterruptedException {
+        long startTime = System.currentTimeMillis();
         /*Generate array*/
-        arrayA = new int[N];
+        arrayA = new long[N];
         for (int i = 0; i < N; i++) {
             arrayA[i] = i + 1;
         }
@@ -45,17 +37,17 @@ public class ParallelSum {
         /* Create array to hold team of threads */
         Thread[] workers = new Thread[nThreads];
         /* Amount of work each thread will do */
-        int work = arrayA.length / nThreads;
-        int remainder = N % nThreads;
+        long work = arrayA.length / nThreads;
+        long remainder = N % nThreads;
 
         for (int i = 0; i < nThreads; i++) {
             /* Starting and ending index each thread will work on */
-            int low = work * i; // Begin
-            int high = low + work; // Begin + work
+            long low = work * i; // Begin
+            long high = low + work; // Begin + work
 
-//            if (remainder > 0 && i == nThreads) {
-//                high = i + 1 % work + remainder;
-//            }
+            if (nThreads - 1 == i) {
+                high += remainder;
+            }
 
             Runnable obj = new Worker(low, high);
             workers[i] = new Thread(obj);
@@ -66,20 +58,20 @@ public class ParallelSum {
             workers[i].join();
         }
 
-        //long elapsedTime = System.currentTimeMillis() - startTime;
+        long elapsedTime = System.currentTimeMillis() - startTime;
         System.out.println(Thread.currentThread().getName() + ": Sequential Sum " + seqSum()
-                + ", Parallel Sum " + totalSum + " Num threads: " + nThreads + " Array size: " + arrayA.length);
+                + ", Parallel Sum " + totalSum + " Num threads: " + nThreads + " Array size: "
+                + arrayA.length + " elapsed: " + elapsedTime + "ms");
     }
 
     /**
      * Worker class that implements Runnable
      */
     public static class Worker implements Runnable {
-        private final int low;
-        private final int high;
-        private int localSum;
+        private final long low;
+        private final long high;
 
-        public Worker(int low, int high) {
+        public Worker(long low, long high) {
             this.low = low;
             this.high = high;
         }
@@ -90,10 +82,10 @@ public class ParallelSum {
         @Override
         public void run() {
             mutex.lock();
-
+            long localSum = 0;
             try {
-                for (int i = low; i < high; i++) {
-                    totalSum += arrayA[i];
+                for (int i = (int) low; i < high; i++) {
+                    localSum += arrayA[i];
                 }
                 totalSum += localSum;
             } finally {
